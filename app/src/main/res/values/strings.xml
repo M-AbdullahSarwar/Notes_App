@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Vault_App</string>
+    <string name="my_vault">My Vault</string>
+    <string name="types">Types</string>
+    <string name="_4">4</string>
+    <string name="login">Login</string>
+    <string name="card">Card</string>
+    <string name="_0">0</string>
+    <string name="identity">Identity</string>
+    <string name="secure_note">Secure note</string>
+    <string name="folders">Folders</string>
+    <string name="_1">1</string>
+    <string name="no_folder">No folder</string>
+    <string name="bin">Bin</string>
+</resources>
