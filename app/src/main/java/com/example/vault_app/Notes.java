@@ -13,12 +13,15 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import java.util.ArrayList;
 
 public class Notes extends AppCompatActivity {
 
     RecyclerView rvNotes;
-    Button btnAddNote;
+    NoteAdapter adapter;
+    FloatingActionButton btnAddNote;
 
 
     @Override
@@ -33,15 +36,15 @@ public class Notes extends AppCompatActivity {
         });
 
 
-        //init();
+        init();
+        btnAddNote.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(Notes.this, Add_Note.class));
+                finish();
+            }
+        });
 
-//        btnAddNote.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                startActivity(new Intent(Notes.this, Add_Note.class));
-//
-//            }
-//        });
     }
 
     private void init() {
@@ -56,6 +59,7 @@ public class Notes extends AppCompatActivity {
         ArrayList<NoteClass> notes = dataBase.readAllNotes();
         dataBase.close();
 
-        rvNotes.setAdapter(new NoteAdapter(this, notes));
+        adapter = new NoteAdapter(this, notes);
+        rvNotes.setAdapter(adapter);
     }
 }

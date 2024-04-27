@@ -1,5 +1,6 @@
 package com.example.vault_app;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -49,6 +50,9 @@ public class Add_Note extends AppCompatActivity {
                 dataBase.open();
                 dataBase.insertNote(name, pass, url);
                 dataBase.close();
+
+                startActivity(new Intent(Add_Note.this, Notes.class));
+                finish();
             }
         });
     }

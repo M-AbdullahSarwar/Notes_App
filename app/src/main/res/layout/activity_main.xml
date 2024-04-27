@@ -123,6 +123,7 @@
                 />
 
             <TextView
+                android:id="@+id/tvNumber_of_Notes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -341,7 +342,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/_0"
+                android:text="@string/_1"
                 android:textColor="#B3A3A3"
 
                 />
@@ -377,6 +378,7 @@
                 />
 
             <TextView
+                android:id="@+id/tvNumber_of_Del_Notes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"

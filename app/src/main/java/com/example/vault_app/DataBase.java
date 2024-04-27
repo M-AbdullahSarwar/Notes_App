@@ -43,6 +43,14 @@ public class DataBase {
     private final String KEY_URL_NOTE = "_url";
     private final String KEY_USER_ID = "_user";
 
+
+    //Columns of DELETED Notes Table of a logged in user
+    private final String KEY_ID_DEL_NOTE = "_id";
+    private final String KEY_NAME_DEL_NOTE = "_name";
+    private final String KEY_PASSWORD_DEL_NOTE = "_password";
+    private final String KEY_URL_DEL_NOTE = "_url";
+    private final String KEY_USER_ID_DEL = "_user";
+
     Context context;
     MyDatabaseHelper helper;
     SQLiteDatabase sqLiteDatabase;
@@ -61,6 +69,34 @@ public class DataBase {
     public void close() {
         sqLiteDatabase.close();
         helper.close();
+    }
+
+
+    // For Count of Deleted and non Deleted Notes
+    public int getNumberofNotes() {
+        int user_id = getLoggedInUserId();
+        Cursor cursor = sqLiteDatabase.rawQuery("SELECT COUNT(*) FROM " + DB_NOTES_TABLE + " WHERE " + KEY_USER_ID + " =?", new String[]{user_id + ""});
+
+        int count = 0;
+        if (cursor.moveToFirst()) {
+            count = cursor.getInt(0);
+        }
+        cursor.close();
+
+        return count;
+    }
+
+    public int getNumberofDeletedNotes() {
+        int user_id = getLoggedInUserId();
+        Cursor cursor = sqLiteDatabase.rawQuery("SELECT COUNT(*) FROM " + DB_BIN_TABLE + " WHERE " + KEY_USER_ID_DEL + " =?", new String[]{user_id + ""});
+
+        int count = 0;
+        if (cursor.moveToFirst()) {
+            count = cursor.getInt(0);
+        }
+        cursor.close();
+
+        return count;
     }
 
     // Database Helper class
@@ -83,16 +119,23 @@ public class DataBase {
 
 
             db.execSQL("CREATE TABLE " + DB_NOTES_TABLE + "(" +
-                    KEY_ID_NOTE + "INTEGER PRIMARY KEY AUTOINCREMENT," +
-                    KEY_NAME_NOTE + "TEXT NOT NULL," +
-                    KEY_PASSWORD_NOTE + "TEXT NOT NULL," +
-                    KEY_URL_NOTE + "TEXT NOT NULL," +
-                    KEY_USER_ID + "INTEGER NOT NULL," +
+                    KEY_ID_NOTE + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    KEY_NAME_NOTE + " TEXT NOT NULL," +
+                    KEY_PASSWORD_NOTE + " TEXT NOT NULL," +
+                    KEY_URL_NOTE + " TEXT NOT NULL," +
+                    KEY_USER_ID + " INTEGER NOT NULL," +
                     "FOREIGN KEY(" + KEY_USER_ID + ") REFERENCES " + DB_LOGIN_TABLE + "(" + KEY_ID_LOGIN + "));"
                     );
 
 
-            //db.execSQL("CREATE TABLE " + DB_BIN_TABLE + "(" +);
+            db.execSQL("CREATE TABLE " + DB_BIN_TABLE + "(" +
+                    KEY_ID_DEL_NOTE + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    KEY_NAME_DEL_NOTE + " TEXT NOT NULL," +
+                    KEY_PASSWORD_DEL_NOTE + " TEXT NOT NULL," +
+                    KEY_URL_DEL_NOTE + " TEXT NOT NULL," +
+                    KEY_USER_ID_DEL + " INTEGER NOT NULL," +
+                    "FOREIGN KEY(" + KEY_USER_ID_DEL + ") REFERENCES " + DB_LOGIN_TABLE + "(" + KEY_ID_LOGIN + "));"
+            );
 
         }
 
@@ -203,6 +246,7 @@ public class DataBase {
 
             do {
                 NoteClass note = new NoteClass();
+
                 note.setId(cursor.getInt(index_id));
                 note.setName(cursor.getString(index_name));
                 note.setPassword(cursor.getString(index_password));
@@ -229,6 +273,120 @@ public class DataBase {
             Toast.makeText(context, "Note not added", Toast.LENGTH_SHORT).show();
         else
             Toast.makeText(context, "Note Added", Toast.LENGTH_SHORT).show();
+    }
+
+    public void updateNote(int id, String name, String password, String url) {
+        ContentValues cv = new ContentValues();
+        cv.put(KEY_NAME_NOTE, name);
+        cv.put(KEY_PASSWORD_NOTE, password);
+        cv.put(KEY_URL_NOTE, url);
+        int res = sqLiteDatabase.update(DB_NOTES_TABLE, cv, KEY_ID_NOTE + " =?", new String[]{id + ""});
+        if (res > 0)
+            Toast.makeText(context, "Note Updated", Toast.LENGTH_SHORT).show();
+        else
+            Toast.makeText(context, "Note not Updated", Toast.LENGTH_SHORT).show();
+    }
+
+
+
+    // Functions for Bin
+
+    public void deleteNote(int id) {
+        int user_id = getLoggedInUserId();
+        Cursor cursor = sqLiteDatabase.rawQuery("SELECT * FROM " + DB_NOTES_TABLE + " WHERE " + KEY_ID_NOTE + " =?", new String[]{id+""});
+
+        int index_name = cursor.getColumnIndex(KEY_NAME_NOTE);
+        int index_password = cursor.getColumnIndex(KEY_PASSWORD_NOTE);
+        int index_url = cursor.getColumnIndex(KEY_URL_NOTE);
+
+        if(cursor.moveToFirst()) {
+            String name = cursor.getString(index_name);
+            String password = cursor.getString(index_password);
+            String url = cursor.getString(index_url);
+
+            ContentValues cv = new ContentValues();
+            cv.put(KEY_NAME_DEL_NOTE, name);
+            cv.put(KEY_PASSWORD_DEL_NOTE, password);
+            cv.put(KEY_URL_DEL_NOTE, url);
+            cv.put(KEY_USER_ID_DEL, user_id);
+
+            long res = sqLiteDatabase.insert(DB_BIN_TABLE, null, cv);
+
+            int rows = sqLiteDatabase.delete(DB_NOTES_TABLE, KEY_ID_NOTE + " =?", new String[]{id+""});
+
+            if (res == -1 && rows <= 0)
+                Toast.makeText(context, "Note not Deleted", Toast.LENGTH_SHORT).show();
+            else
+                Toast.makeText(context, "Note Deleted", Toast.LENGTH_SHORT).show();
+
+
+        }
+        cursor.close();
+    }
+
+    public ArrayList<NoteClass> readAllDeletedNotes() {
+        String loggedInUserID = getLoggedInUserId() + "";
+
+        Cursor cursor = sqLiteDatabase.rawQuery("SELECT * FROM " + DB_BIN_TABLE + " WHERE " +
+                KEY_USER_ID_DEL + " =?", new String[]{loggedInUserID});
+
+        int index_id = cursor.getColumnIndex(KEY_ID_DEL_NOTE);
+        int index_name = cursor.getColumnIndex(KEY_NAME_DEL_NOTE);
+        int index_password = cursor.getColumnIndex(KEY_PASSWORD_DEL_NOTE);
+        int index_url = cursor.getColumnIndex(KEY_URL_DEL_NOTE);
+
+        ArrayList<NoteClass> del_notes = new ArrayList<>();
+
+        if (cursor.moveToFirst()) {
+
+            do {
+                NoteClass note = new NoteClass();
+
+                note.setId(cursor.getInt(index_id));
+                note.setName(cursor.getString(index_name));
+                note.setPassword(cursor.getString(index_password));
+                note.setUrl(cursor.getString(index_url));
+
+                del_notes.add(note);
+
+            }while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        return del_notes;
+
+    }
+
+    public void restoreDeletedNote(int id) {
+        int user_id = getLoggedInUserId();
+        Cursor cursor = sqLiteDatabase.rawQuery("SELECT * FROM " + DB_BIN_TABLE + " WHERE " + KEY_ID_DEL_NOTE + " =?", new String[]{id+""});
+
+        int index_name = cursor.getColumnIndex(KEY_NAME_DEL_NOTE);
+        int index_password = cursor.getColumnIndex(KEY_PASSWORD_DEL_NOTE);
+        int index_url = cursor.getColumnIndex(KEY_URL_DEL_NOTE);
+
+        if(cursor.moveToFirst()) {
+            String name = cursor.getString(index_name);
+            String password = cursor.getString(index_password);
+            String url = cursor.getString(index_url);
+
+            ContentValues cv = new ContentValues();
+            cv.put(KEY_NAME_NOTE, name);
+            cv.put(KEY_PASSWORD_NOTE, password);
+            cv.put(KEY_URL_NOTE, url);
+            cv.put(KEY_USER_ID, user_id);
+
+            long res = sqLiteDatabase.insert(DB_NOTES_TABLE, null, cv);
+
+            int rows = sqLiteDatabase.delete(DB_BIN_TABLE, KEY_ID_DEL_NOTE + " =?", new String[]{id+""});
+
+            if (res == -1 && rows <= 0)
+                Toast.makeText(context, "Note not Restored", Toast.LENGTH_SHORT).show();
+            else
+                Toast.makeText(context, "Note Restored", Toast.LENGTH_SHORT).show();
+
+        }
+        cursor.close();
     }
 
 }
